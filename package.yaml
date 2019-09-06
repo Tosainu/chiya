@@ -4,7 +4,7 @@ category:   Language
 author:     Tosainu
 maintainer: tosainu.maple@gmail.com
 copyright:  2017 Tosainu
-license:    BSD3
+license:    MIT
 github:     Tosainu/Chiya
 extra-source-files:
   - README.md
