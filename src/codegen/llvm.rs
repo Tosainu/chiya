@@ -38,7 +38,7 @@ impl emitter::Emitter for LLVM {
         );
         self.variable_idx += 2;
 
-        s.to_string()
+        s
     }
 
     fn emit_add(&mut self, n: i32) -> String {
@@ -56,7 +56,7 @@ impl emitter::Emitter for LLVM {
         );
         self.variable_idx += 3;
 
-        s.to_string()
+        s
     }
 
     fn emit_call_putchar(&mut self) -> String {
@@ -72,7 +72,7 @@ impl emitter::Emitter for LLVM {
         );
         self.variable_idx += 3;
 
-        s.to_string()
+        s
     }
 
     fn emit_call_getchar(&mut self) -> String {
@@ -87,7 +87,7 @@ impl emitter::Emitter for LLVM {
         );
         self.variable_idx += 2;
 
-        s.to_string()
+        s
     }
 
     fn emit_loop_begin(&mut self) -> String {
@@ -110,7 +110,7 @@ loop{3}_body:"#,
         self.variable_idx += 3;
         self.label_idx += 1;
 
-        s.to_string()
+        s
     }
 
     fn emit_loop_end(&mut self) -> String {
@@ -124,7 +124,6 @@ loop{3}_body:"#,
 loop{0}_end:"#,
                     n
                 )
-                .to_string()
             })
             .unwrap_or_else(|| "".to_owned())
     }
@@ -159,6 +158,5 @@ declare i32 @putchar(i32)"#,
             self.variable_idx,
             self.variable_idx + 1
         )
-        .to_string()
     }
 }
