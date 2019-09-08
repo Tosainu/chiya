@@ -48,8 +48,9 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, String> {
             lazy_static! {
                 static ref WHITESPACES: Regex = Regex::new(r"^\s+").unwrap();
                 static ref COMMENT: Regex = Regex::new(r"(?m)^//.+$").unwrap();
-                static ref INTEGER: Regex = Regex::new(r"^[[:digit:]]+\b").unwrap();
-                static ref ID_OR_KEY: Regex = Regex::new(r"^[[:alpha:]][[:alnum:]]*\b").unwrap();
+                static ref INTEGER: Regex = Regex::new(r"^-?\d+\b").unwrap();
+                static ref ID_OR_KEY: Regex =
+                    Regex::new(r"^[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+\b").unwrap();
             }
 
             match_re!(WHITESPACES, |_| {});
@@ -91,12 +92,13 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, String> {
 #[test]
 fn test_tokenize() {
     assert_eq!(tokenize("     "), Ok(vec![]));
-    assert_eq!(tokenize("while"), Ok(vec![Token::While]));
-    assert_eq!(
-        tokenize("hoge"),
-        Ok(vec![Token::Identififier("hoge".to_owned())])
-    );
     assert_eq!(tokenize("123"), Ok(vec![Token::Integer(123)]));
+    assert_eq!(tokenize("-123"), Ok(vec![Token::Integer(-123)]));
+
+    assert_eq!(
+        tokenize("123 123"),
+        Ok(vec![Token::Integer(123), Token::Integer(123)])
+    );
     assert_eq!(tokenize("*"), Ok(vec![Token::Star]));
     assert_eq!(tokenize("+="), Ok(vec![Token::PlusEq]));
     assert_eq!(tokenize("-="), Ok(vec![Token::MinusEq]));
@@ -105,6 +107,25 @@ fn test_tokenize() {
     assert_eq!(tokenize(")"), Ok(vec![Token::ParenClose]));
     assert_eq!(tokenize("{"), Ok(vec![Token::CurlyOpen]));
     assert_eq!(tokenize("}"), Ok(vec![Token::CurlyClose]));
+
+    assert_eq!(tokenize("while"), Ok(vec![Token::While]));
+    assert_eq!(
+        tokenize("hoge"),
+        Ok(vec![Token::Identififier("hoge".to_owned())])
+    );
+    assert_eq!(
+        tokenize("hoge_fuga"),
+        Ok(vec![Token::Identififier("hoge_fuga".to_owned())])
+    );
+    assert_eq!(
+        tokenize("hoge123"),
+        Ok(vec![Token::Identififier("hoge123".to_owned())])
+    );
+    assert!(tokenize("_").is_err());
+    assert_eq!(
+        tokenize("_hoge"),
+        Ok(vec![Token::Identififier("_hoge".to_owned())])
+    );
 
     assert!(tokenize("+").is_err());
     assert!(tokenize("-").is_err());
