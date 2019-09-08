@@ -1,4 +1,3 @@
-#![allow(clippy::trivial_regex)]
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -28,14 +27,6 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, String> {
         static ref WHITESPACES: Regex = Regex::new(r"^\s+").unwrap();
         static ref COMMENT: Regex = Regex::new(r"(?m)^//.+$").unwrap();
         static ref INTEGER: Regex = Regex::new(r"^[[:digit:]]+\b").unwrap();
-        static ref STAR: Regex = Regex::new(r"^\*").unwrap();
-        static ref PLUS_EQ: Regex = Regex::new(r"^\+=").unwrap();
-        static ref MINUS_EQ: Regex = Regex::new(r"^-=").unwrap();
-        static ref SEMI: Regex = Regex::new(r"^;").unwrap();
-        static ref PAREN_OPEN: Regex = Regex::new(r"^\(").unwrap();
-        static ref PAREN_CLOSE: Regex = Regex::new(r"^\)").unwrap();
-        static ref CURLY_OPEN: Regex = Regex::new(r"^\{").unwrap();
-        static ref CURLY_CLOSE: Regex = Regex::new(r"^\}").unwrap();
         static ref ID_OR_KEY: Regex = Regex::new(r"^[[:alpha:]][[:alnum:]]*\b").unwrap();
     }
 
@@ -54,6 +45,16 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, String> {
                 };
             }
 
+            macro_rules! match_str {
+                ($pat:expr, $closure:expr) => {
+                    if s.starts_with($pat) {
+                        $closure();
+                        cur += $pat.len();
+                        continue;
+                    }
+                };
+            }
+
             match_re!(WHITESPACES, |_| {});
             match_re!(COMMENT, |_| {});
 
@@ -61,14 +62,14 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, String> {
                 tokens.push(Token::Integer(m.as_str().parse().unwrap()));
             });
 
-            match_re!(STAR, |_| tokens.push(Token::Star));
-            match_re!(PLUS_EQ, |_| tokens.push(Token::PlusEq));
-            match_re!(MINUS_EQ, |_| tokens.push(Token::MinusEq));
-            match_re!(SEMI, |_| tokens.push(Token::Semi));
-            match_re!(PAREN_OPEN, |_| tokens.push(Token::ParenOpen));
-            match_re!(PAREN_CLOSE, |_| tokens.push(Token::ParenClose));
-            match_re!(CURLY_OPEN, |_| tokens.push(Token::CurlyOpen));
-            match_re!(CURLY_CLOSE, |_| tokens.push(Token::CurlyClose));
+            match_str!("+=", || tokens.push(Token::PlusEq));
+            match_str!("-=", || tokens.push(Token::MinusEq));
+            match_str!("*", || tokens.push(Token::Star));
+            match_str!(";", || tokens.push(Token::Semi));
+            match_str!("(", || tokens.push(Token::ParenOpen));
+            match_str!(")", || tokens.push(Token::ParenClose));
+            match_str!("{", || tokens.push(Token::CurlyOpen));
+            match_str!("}", || tokens.push(Token::CurlyClose));
 
             match_re!(ID_OR_KEY, |m: regex::Match| {
                 let t = match m.as_str() {
