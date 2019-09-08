@@ -21,19 +21,9 @@ pub enum Token {
 }
 
 pub fn tokenize(src: &str) -> Result<Vec<Token>, String> {
-    let bytelen = src.len();
-
-    lazy_static! {
-        static ref WHITESPACES: Regex = Regex::new(r"^\s+").unwrap();
-        static ref COMMENT: Regex = Regex::new(r"(?m)^//.+$").unwrap();
-        static ref INTEGER: Regex = Regex::new(r"^[[:digit:]]+\b").unwrap();
-        static ref ID_OR_KEY: Regex = Regex::new(r"^[[:alpha:]][[:alnum:]]*\b").unwrap();
-    }
-
     let mut tokens = Vec::new();
-
     let mut cur = 0;
-    while cur < bytelen {
+    while cur < src.len() {
         if let Some(s) = src.get(cur..) {
             macro_rules! match_re {
                 ($re:expr, $closure:expr) => {
@@ -46,13 +36,20 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, String> {
             }
 
             macro_rules! match_str {
-                ($pat:expr, $closure:expr) => {
+                ($pat:expr, $e:expr) => {
                     if s.starts_with($pat) {
-                        $closure();
+                        $e;
                         cur += $pat.len();
                         continue;
                     }
                 };
+            }
+
+            lazy_static! {
+                static ref WHITESPACES: Regex = Regex::new(r"^\s+").unwrap();
+                static ref COMMENT: Regex = Regex::new(r"(?m)^//.+$").unwrap();
+                static ref INTEGER: Regex = Regex::new(r"^[[:digit:]]+\b").unwrap();
+                static ref ID_OR_KEY: Regex = Regex::new(r"^[[:alpha:]][[:alnum:]]*\b").unwrap();
             }
 
             match_re!(WHITESPACES, |_| {});
@@ -62,14 +59,14 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, String> {
                 tokens.push(Token::Integer(m.as_str().parse().unwrap()));
             });
 
-            match_str!("+=", || tokens.push(Token::PlusEq));
-            match_str!("-=", || tokens.push(Token::MinusEq));
-            match_str!("*", || tokens.push(Token::Star));
-            match_str!(";", || tokens.push(Token::Semi));
-            match_str!("(", || tokens.push(Token::ParenOpen));
-            match_str!(")", || tokens.push(Token::ParenClose));
-            match_str!("{", || tokens.push(Token::CurlyOpen));
-            match_str!("}", || tokens.push(Token::CurlyClose));
+            match_str!("+=", tokens.push(Token::PlusEq));
+            match_str!("-=", tokens.push(Token::MinusEq));
+            match_str!("*", tokens.push(Token::Star));
+            match_str!(";", tokens.push(Token::Semi));
+            match_str!("(", tokens.push(Token::ParenOpen));
+            match_str!(")", tokens.push(Token::ParenClose));
+            match_str!("{", tokens.push(Token::CurlyOpen));
+            match_str!("}", tokens.push(Token::CurlyClose));
 
             match_re!(ID_OR_KEY, |m: regex::Match| {
                 let t = match m.as_str() {
@@ -81,7 +78,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, String> {
 
             return Err(format!(
                 "unexpected character: '{}'",
-                src.get(cur..).iter().next().unwrap()
+                s.chars().next().unwrap()
             ));
         } else {
             return Err(format!("src.get({}..) returns None", cur));
