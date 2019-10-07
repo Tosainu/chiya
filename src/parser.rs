@@ -1,13 +1,13 @@
 // rhs -> number
 #[derive(Debug, PartialEq)]
-enum Rhs {
+pub enum Rhs {
     Number(i32),
 }
 
 // lhs -> identifier
 //      | '*' identifier
 #[derive(Debug, PartialEq)]
-enum Lhs {
+pub enum Lhs {
     Pointer(String),
     Dereference(String),
 }
@@ -17,7 +17,7 @@ enum Lhs {
 //             | identifier '(' ')'
 //             | lhs
 #[derive(Debug, PartialEq)]
-enum Expression {
+pub enum Expression {
     AssignAdd(Lhs, Rhs),
     AssignSub(Lhs, Rhs),
     FunctionCall(String),
@@ -28,7 +28,7 @@ enum Expression {
 //             | block
 //             | 'while' expression block
 #[derive(Debug, PartialEq)]
-enum Statement {
+pub enum Statement {
     Expression(Expression),
     Block(Box<Block>),
     While(Expression, Box<Block>),
@@ -37,19 +37,19 @@ enum Statement {
 // statements -> statement statement
 //             | statement
 #[derive(Debug, PartialEq)]
-enum Statements {
+pub enum Statements {
     Statements(Statement, Statement),
     Statement(Statement),
 }
 
 // block -> '{' statements '}'
 #[derive(Debug, PartialEq)]
-enum Block {
+pub enum Block {
     Statements(Statements),
 }
 
 // program -> statements
 #[derive(Debug, PartialEq)]
-enum Program {
+pub enum Program {
     Statements(Statements),
 }
