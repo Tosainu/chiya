@@ -100,3 +100,110 @@ fn test_lhs() {
         Some((&[] as &[Token], Lhs::Dereference("hoge".to_owned())))
     );
 }
+
+pub fn expression(tokens: &[Token]) -> Option<(&[Token], Expression)> {
+    lhs(tokens).and_then(|(tokens, l)| match tokens.first() {
+        Some(Token::PlusEq) => rhs(&tokens[1..]).map(|(t, r)| (t, Expression::AssignAdd(l, r))),
+
+        Some(Token::MinusEq) => rhs(&tokens[1..]).map(|(t, r)| (t, Expression::AssignSub(l, r))),
+
+        _ => Some((tokens, Expression::Lhs(l))),
+    })
+}
+
+#[test]
+fn test_expression() {
+    assert_eq!(expression(&[]), None);
+
+    assert_eq!(
+        expression(&[Token::Identififier("hoge".to_owned())]),
+        Some((
+            &[] as &[Token],
+            Expression::Lhs(Lhs::Pointer("hoge".to_owned()))
+        ))
+    );
+    assert_eq!(
+        expression(&[Token::Star, Token::Identififier("hoge".to_owned())]),
+        Some((
+            &[] as &[Token],
+            Expression::Lhs(Lhs::Dereference("hoge".to_owned()))
+        ))
+    );
+    assert_eq!(
+        expression(&[
+            Token::Identififier("hoge".to_owned()),
+            Token::Identififier("hoge".to_owned())
+        ]),
+        Some((
+            &[Token::Identififier("hoge".to_owned())] as &[Token],
+            Expression::Lhs(Lhs::Pointer("hoge".to_owned()))
+        ))
+    );
+
+    assert_eq!(
+        expression(&[
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123)
+        ]),
+        Some((
+            &[] as &[Token],
+            Expression::AssignAdd(Lhs::Pointer("hoge".to_owned()), Rhs::Number(123))
+        ))
+    );
+    assert_eq!(
+        expression(&[
+            Token::Star,
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123)
+        ]),
+        Some((
+            &[] as &[Token],
+            Expression::AssignAdd(Lhs::Dereference("hoge".to_owned()), Rhs::Number(123))
+        ))
+    );
+
+    assert_eq!(
+        expression(&[
+            Token::Identififier("hoge".to_owned()),
+            Token::MinusEq,
+            Token::Integer(123)
+        ]),
+        Some((
+            &[] as &[Token],
+            Expression::AssignSub(Lhs::Pointer("hoge".to_owned()), Rhs::Number(123))
+        ))
+    );
+    assert_eq!(
+        expression(&[
+            Token::Star,
+            Token::Identififier("hoge".to_owned()),
+            Token::MinusEq,
+            Token::Integer(123)
+        ]),
+        Some((
+            &[] as &[Token],
+            Expression::AssignSub(Lhs::Dereference("hoge".to_owned()), Rhs::Number(123))
+        ))
+    );
+
+    // TODO:
+    // assert_eq!(
+    //     expression(&[
+    //         Token::Identififier("hoge".to_owned()),
+    //         Token::ParenOpen,
+    //         Token::ParenClose
+    //     ]),
+    //     Some((&[] as &[Token], Expression::FunctionCall("hoge".to_owned())))
+    // );
+
+    assert_eq!(
+        expression(&[
+            Token::Identififier("hoge".to_owned()),
+            Token::MinusEq,
+            Token::Identififier("hoge".to_owned()),
+        ]),
+        None
+    );
+}
