@@ -216,14 +216,19 @@ pub fn statement(tokens: &[Token]) -> Option<(&[Token], Statement)> {
         })
     }
 
-    fn block_s(_tokens: &[Token]) -> Option<(&[Token], Statement)> {
-        // TODO
-        None
+    fn block_s(tokens: &[Token]) -> Option<(&[Token], Statement)> {
+        block(tokens).map(|(tokens, b)| (tokens, Statement::Block(Box::new(b))))
     }
 
-    fn while_s(_tokens: &[Token]) -> Option<(&[Token], Statement)> {
-        // TODO
-        None
+    fn while_s(tokens: &[Token]) -> Option<(&[Token], Statement)> {
+        match tokens.first() {
+            Some(Token::While) => {
+                let (tokens, e) = expression(&tokens[1..])?;
+                let (tokens, b) = block(tokens)?;
+                Some((tokens, Statement::While(e, Box::new(b))))
+            }
+            _ => None,
+        }
     }
 
     expression_s(tokens)
@@ -266,6 +271,52 @@ fn test_statement() {
                 Lhs::Pointer("hoge".to_owned()),
                 Rhs::Number(123)
             ))
+        ))
+    );
+
+    assert_eq!(
+        statement(&[
+            Token::CurlyOpen,
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi,
+            Token::CurlyClose
+        ]),
+        Some((
+            &[] as &[Token],
+            Statement::Block(Box::new(Block::Statements(Statements::Statement(
+                Statement::Expression(Expression::AssignAdd(
+                    Lhs::Pointer("hoge".to_owned()),
+                    Rhs::Number(123)
+                ))
+            ))))
+        ))
+    );
+
+    assert_eq!(
+        statement(&[
+            Token::While,
+            Token::Star,
+            Token::Identififier("hoge".to_owned()),
+            Token::CurlyOpen,
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi,
+            Token::CurlyClose
+        ]),
+        Some((
+            &[] as &[Token],
+            Statement::While(
+                Expression::Lhs(Lhs::Dereference("hoge".to_owned())),
+                Box::new(Block::Statements(Statements::Statement(
+                    Statement::Expression(Expression::AssignAdd(
+                        Lhs::Pointer("hoge".to_owned()),
+                        Rhs::Number(123)
+                    ))
+                )))
+            )
         ))
     );
 }
