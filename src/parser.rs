@@ -207,3 +207,65 @@ fn test_expression() {
         None
     );
 }
+
+pub fn statement(tokens: &[Token]) -> Option<(&[Token], Statement)> {
+    fn expression_s(tokens: &[Token]) -> Option<(&[Token], Statement)> {
+        expression(tokens).and_then(|(t, e)| match t.first() {
+            Some(Token::Semi) => Some((&t[1..], Statement::Expression(e))),
+            _ => None,
+        })
+    }
+
+    fn block_s(_tokens: &[Token]) -> Option<(&[Token], Statement)> {
+        // TODO
+        None
+    }
+
+    fn while_s(_tokens: &[Token]) -> Option<(&[Token], Statement)> {
+        // TODO
+        None
+    }
+
+    expression_s(tokens)
+        .or_else(|| block_s(tokens))
+        .or_else(|| while_s(tokens))
+}
+
+#[test]
+fn test_statement() {
+    assert_eq!(statement(&[]), None);
+
+    assert_eq!(
+        statement(&[Token::Identififier("hoge".to_owned()), Token::Semi]),
+        Some((
+            &[] as &[Token],
+            Statement::Expression(Expression::Lhs(Lhs::Pointer("hoge".to_owned())))
+        ))
+    );
+    assert_eq!(
+        statement(&[
+            Token::Star,
+            Token::Identififier("hoge".to_owned()),
+            Token::Semi
+        ]),
+        Some((
+            &[] as &[Token],
+            Statement::Expression(Expression::Lhs(Lhs::Dereference("hoge".to_owned())))
+        ))
+    );
+    assert_eq!(
+        statement(&[
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi
+        ]),
+        Some((
+            &[] as &[Token],
+            Statement::Expression(Expression::AssignAdd(
+                Lhs::Pointer("hoge".to_owned()),
+                Rhs::Number(123)
+            ))
+        ))
+    );
+}
