@@ -327,3 +327,110 @@ fn test_statements() {
         ))
     );
 }
+
+pub fn block(tokens: &[Token]) -> Option<(&[Token], Block)> {
+    tokens.first().filter(|t| **t == Token::CurlyOpen)?;
+    let (tokens, s) = statements(&tokens[1..])?;
+    tokens.first().filter(|t| **t == Token::CurlyClose)?;
+    Some((&tokens[1..], Block::Statements(s)))
+}
+
+#[test]
+fn test_block() {
+    assert_eq!(block(&[]), None);
+
+    assert_eq!(
+        block(&[
+            Token::CurlyOpen,
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi,
+            Token::CurlyClose
+        ]),
+        Some((
+            &[] as &[Token],
+            Block::Statements(Statements::Statement(Statement::Expression(
+                Expression::AssignAdd(Lhs::Pointer("hoge".to_owned()), Rhs::Number(123))
+            )))
+        ))
+    );
+
+    assert_eq!(
+        block(&[
+            Token::CurlyOpen,
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi,
+            Token::Star,
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi,
+            Token::CurlyClose
+        ]),
+        Some((
+            &[] as &[Token],
+            Block::Statements(Statements::Statements(
+                Box::new(Statements::Statement(Statement::Expression(
+                    Expression::AssignAdd(Lhs::Pointer("hoge".to_owned()), Rhs::Number(123))
+                ))),
+                Statement::Expression(Expression::AssignAdd(
+                    Lhs::Dereference("hoge".to_owned()),
+                    Rhs::Number(123)
+                ))
+            ))
+        ))
+    );
+}
+
+pub fn program(tokens: &[Token]) -> Option<(&[Token], Program)> {
+    statements(tokens).map(|(tokens, s)| (tokens, Program::Statements(s)))
+}
+
+#[test]
+fn test_program() {
+    assert_eq!(program(&[]), None);
+
+    assert_eq!(
+        program(&[
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi,
+        ]),
+        Some((
+            &[] as &[Token],
+            Program::Statements(Statements::Statement(Statement::Expression(
+                Expression::AssignAdd(Lhs::Pointer("hoge".to_owned()), Rhs::Number(123))
+            )))
+        ))
+    );
+
+    assert_eq!(
+        program(&[
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi,
+            Token::Star,
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi,
+        ]),
+        Some((
+            &[] as &[Token],
+            Program::Statements(Statements::Statements(
+                Box::new(Statements::Statement(Statement::Expression(
+                    Expression::AssignAdd(Lhs::Pointer("hoge".to_owned()), Rhs::Number(123))
+                ))),
+                Statement::Expression(Expression::AssignAdd(
+                    Lhs::Dereference("hoge".to_owned()),
+                    Rhs::Number(123)
+                ))
+            ))
+        ))
+    );
+}
