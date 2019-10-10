@@ -40,7 +40,7 @@ pub enum Statement {
 //             | statement
 #[derive(Debug, PartialEq)]
 pub enum Statements {
-    Statements(Statement, Statement),
+    Statements(Box<Statements>, Statement),
     Statement(Statement),
 }
 
@@ -266,6 +266,64 @@ fn test_statement() {
                 Lhs::Pointer("hoge".to_owned()),
                 Rhs::Number(123)
             ))
+        ))
+    );
+}
+
+pub fn statements(tokens: &[Token]) -> Option<(&[Token], Statements)> {
+    fn statements_inner(init: (&[Token], Statements)) -> Option<(&[Token], Statements)> {
+        match statement(init.0) {
+            Some((tokens, s)) => Some((tokens, Statements::Statements(Box::new(init.1), s))),
+            _ => Some(init),
+        }
+    }
+
+    statement(tokens).and_then(|(tokens, s)| statements_inner((tokens, Statements::Statement(s))))
+}
+
+#[test]
+fn test_statements() {
+    assert_eq!(statements(&[]), None);
+
+    assert_eq!(
+        statements(&[
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi
+        ]),
+        Some((
+            &[] as &[Token],
+            Statements::Statement(Statement::Expression(Expression::AssignAdd(
+                Lhs::Pointer("hoge".to_owned()),
+                Rhs::Number(123)
+            )))
+        ))
+    );
+
+    assert_eq!(
+        statements(&[
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi,
+            Token::Star,
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi
+        ]),
+        Some((
+            &[] as &[Token],
+            Statements::Statements(
+                Box::new(Statements::Statement(Statement::Expression(
+                    Expression::AssignAdd(Lhs::Pointer("hoge".to_owned()), Rhs::Number(123))
+                ))),
+                Statement::Expression(Expression::AssignAdd(
+                    Lhs::Dereference("hoge".to_owned()),
+                    Rhs::Number(123)
+                ))
+            )
         ))
     );
 }
