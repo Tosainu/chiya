@@ -16,13 +16,13 @@ pub enum Lhs {
 
 // expression -> lhs '+=' rhs
 //             | lhs '-=' rhs
-//             | identifier '(' ')'
+//             | lhs '(' ')'
 //             | lhs
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     AssignAdd(Lhs, Rhs),
     AssignSub(Lhs, Rhs),
-    FunctionCall(String),
+    FunctionCall(Lhs),
     Lhs(Lhs),
 }
 
@@ -102,10 +102,18 @@ fn test_lhs() {
 }
 
 pub fn expression(tokens: &[Token]) -> Option<(&[Token], Expression)> {
-    lhs(tokens).and_then(|(tokens, l)| match tokens.first() {
-        Some(Token::PlusEq) => rhs(&tokens[1..]).map(|(t, r)| (t, Expression::AssignAdd(l, r))),
+    lhs(tokens).and_then(|(tokens, l)| match (tokens.get(0), tokens.get(1)) {
+        (Some(Token::PlusEq), _) => {
+            rhs(&tokens[1..]).map(|(t, r)| (t, Expression::AssignAdd(l, r)))
+        }
 
-        Some(Token::MinusEq) => rhs(&tokens[1..]).map(|(t, r)| (t, Expression::AssignSub(l, r))),
+        (Some(Token::MinusEq), _) => {
+            rhs(&tokens[1..]).map(|(t, r)| (t, Expression::AssignSub(l, r)))
+        }
+
+        (Some(Token::ParenOpen), Some(Token::ParenClose)) => {
+            Some((&tokens[2..], Expression::FunctionCall(l)))
+        }
 
         _ => Some((tokens, Expression::Lhs(l))),
     })
@@ -188,15 +196,17 @@ fn test_expression() {
         ))
     );
 
-    // TODO:
-    // assert_eq!(
-    //     expression(&[
-    //         Token::Identififier("hoge".to_owned()),
-    //         Token::ParenOpen,
-    //         Token::ParenClose
-    //     ]),
-    //     Some((&[] as &[Token], Expression::FunctionCall("hoge".to_owned())))
-    // );
+    assert_eq!(
+        expression(&[
+            Token::Identififier("hoge".to_owned()),
+            Token::ParenOpen,
+            Token::ParenClose
+        ]),
+        Some((
+            &[] as &[Token],
+            Expression::FunctionCall(Lhs::Pointer("hoge".to_owned()))
+        ))
+    );
 
     assert_eq!(
         expression(&[
