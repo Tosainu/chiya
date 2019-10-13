@@ -20,7 +20,16 @@ pub enum Token {
     CurlyClose, // '}'
 }
 
-pub fn tokenize(src: &str) -> Result<Vec<Token>, String> {
+#[derive(Debug, PartialEq, failure::Fail)]
+pub enum TokenizerError {
+    #[fail(display = "unexpected character: '{}'", character)]
+    UnexpectedCharacter { character: char },
+
+    #[fail(display = "input error")]
+    InputError,
+}
+
+pub fn tokenize(src: &str) -> Result<Vec<Token>, TokenizerError> {
     let mut tokens = Vec::new();
     let mut cur = 0;
     while cur < src.len() {
@@ -77,12 +86,11 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, String> {
                 tokens.push(t);
             });
 
-            return Err(format!(
-                "unexpected character: '{}'",
-                s.chars().next().unwrap()
-            ));
+            return Err(TokenizerError::UnexpectedCharacter {
+                character: s.chars().next().unwrap(),
+            });
         } else {
-            return Err(format!("src.get({}..) returns None", cur));
+            return Err(TokenizerError::InputError);
         }
     }
 
