@@ -334,7 +334,9 @@ fn test_statement() {
 pub fn statements(tokens: &[Token]) -> Option<(&[Token], Statements)> {
     fn statements_inner(init: (&[Token], Statements)) -> Option<(&[Token], Statements)> {
         match statement(init.0) {
-            Some((tokens, s)) => Some((tokens, Statements::Statements(Box::new(init.1), s))),
+            Some((tokens, s)) => {
+                statements_inner((tokens, Statements::Statements(Box::new(init.1), s)))
+            }
             _ => Some(init),
         }
     }
@@ -382,6 +384,42 @@ fn test_statements() {
                 ))),
                 Statement::Expression(Expression::AssignAdd(
                     Lhs::Dereference("hoge".to_owned()),
+                    Rhs::Number(123)
+                ))
+            )
+        ))
+    );
+
+    assert_eq!(
+        statements(&[
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi,
+            Token::Star,
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi,
+            Token::Identififier("hoge".to_owned()),
+            Token::PlusEq,
+            Token::Integer(123),
+            Token::Semi,
+        ]),
+        Some((
+            &[] as &[Token],
+            Statements::Statements(
+                Box::new(Statements::Statements(
+                    Box::new(Statements::Statement(Statement::Expression(
+                        Expression::AssignAdd(Lhs::Pointer("hoge".to_owned()), Rhs::Number(123))
+                    ))),
+                    Statement::Expression(Expression::AssignAdd(
+                        Lhs::Dereference("hoge".to_owned()),
+                        Rhs::Number(123)
+                    ))
+                )),
+                Statement::Expression(Expression::AssignAdd(
+                    Lhs::Pointer("hoge".to_owned()),
                     Rhs::Number(123)
                 ))
             )
