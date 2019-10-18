@@ -56,7 +56,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, TokenizerError> {
 
             lazy_static! {
                 static ref WHITESPACES: Regex = Regex::new(r"^\s+").unwrap();
-                static ref COMMENT: Regex = Regex::new(r"(?m)^//.+$").unwrap();
+                static ref COMMENT: Regex = Regex::new(r"^(?m://.+$)").unwrap();
                 static ref INTEGER: Regex = Regex::new(r"^-?\d+\b").unwrap();
                 static ref ID_OR_KEY: Regex =
                     Regex::new(r"^[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+\b").unwrap();
@@ -145,10 +145,11 @@ fn test_tokenize() {
     assert_eq!(tokenize("123// coment"), Ok(vec![Token::Integer(123)]));
     assert_eq!(
         tokenize(
-            r#"// coment
-123"#
+            r#"123
+// coment
+456"#
         ),
-        Ok(vec![Token::Integer(123)])
+        Ok(vec![Token::Integer(123), Token::Integer(456)])
     );
 
     assert_eq!(
