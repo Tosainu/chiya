@@ -36,7 +36,7 @@ pub enum Statement {
     While(Expression, Box<Block>),
 }
 
-// statements -> statement statement
+// statements -> statements statement
 //             | statement
 #[derive(Debug, PartialEq)]
 pub enum Statements {
@@ -67,7 +67,7 @@ pub fn rhs(tokens: &[Token]) -> Option<(&[Token], Rhs)> {
 fn test_rhs() {
     assert_eq!(rhs(&[]), None);
     assert_eq!(rhs(&[Token::CurlyOpen]), None);
-    assert_eq!(rhs(&[Token::Identififier("123".to_owned())]), None);
+    assert_eq!(rhs(&[Token::Identifier("123".to_owned())]), None);
     assert_eq!(
         rhs(&[Token::Integer(123)]),
         Some((&[] as &[Token], Rhs::Number(123)))
@@ -76,11 +76,11 @@ fn test_rhs() {
 
 pub fn lhs(tokens: &[Token]) -> Option<(&[Token], Lhs)> {
     match (tokens.get(0), tokens.get(1)) {
-        (Some(Token::Star), Some(Token::Identififier(s))) => {
+        (Some(Token::Star), Some(Token::Identifier(s))) => {
             Some((&tokens[2..], Lhs::Dereference(s.to_string())))
         }
 
-        (Some(Token::Identififier(s)), _) => Some((&tokens[1..], Lhs::Pointer(s.to_string()))),
+        (Some(Token::Identifier(s)), _) => Some((&tokens[1..], Lhs::Pointer(s.to_string()))),
 
         _ => None,
     }
@@ -92,11 +92,11 @@ fn test_lhs() {
     assert_eq!(lhs(&[Token::CurlyOpen]), None);
     assert_eq!(lhs(&[Token::Integer(123)]), None);
     assert_eq!(
-        lhs(&[Token::Identififier("hoge".to_owned())]),
+        lhs(&[Token::Identifier("hoge".to_owned())]),
         Some((&[] as &[Token], Lhs::Pointer("hoge".to_owned())))
     );
     assert_eq!(
-        lhs(&[Token::Star, Token::Identififier("hoge".to_owned())]),
+        lhs(&[Token::Star, Token::Identifier("hoge".to_owned())]),
         Some((&[] as &[Token], Lhs::Dereference("hoge".to_owned())))
     );
 }
@@ -124,14 +124,14 @@ fn test_expression() {
     assert_eq!(expression(&[]), None);
 
     assert_eq!(
-        expression(&[Token::Identififier("hoge".to_owned())]),
+        expression(&[Token::Identifier("hoge".to_owned())]),
         Some((
             &[] as &[Token],
             Expression::Lhs(Lhs::Pointer("hoge".to_owned()))
         ))
     );
     assert_eq!(
-        expression(&[Token::Star, Token::Identififier("hoge".to_owned())]),
+        expression(&[Token::Star, Token::Identifier("hoge".to_owned())]),
         Some((
             &[] as &[Token],
             Expression::Lhs(Lhs::Dereference("hoge".to_owned()))
@@ -139,18 +139,18 @@ fn test_expression() {
     );
     assert_eq!(
         expression(&[
-            Token::Identififier("hoge".to_owned()),
-            Token::Identififier("hoge".to_owned())
+            Token::Identifier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned())
         ]),
         Some((
-            &[Token::Identififier("hoge".to_owned())] as &[Token],
+            &[Token::Identifier("hoge".to_owned())] as &[Token],
             Expression::Lhs(Lhs::Pointer("hoge".to_owned()))
         ))
     );
 
     assert_eq!(
         expression(&[
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123)
         ]),
@@ -162,7 +162,7 @@ fn test_expression() {
     assert_eq!(
         expression(&[
             Token::Star,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123)
         ]),
@@ -174,7 +174,7 @@ fn test_expression() {
 
     assert_eq!(
         expression(&[
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::MinusEq,
             Token::Integer(123)
         ]),
@@ -186,7 +186,7 @@ fn test_expression() {
     assert_eq!(
         expression(&[
             Token::Star,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::MinusEq,
             Token::Integer(123)
         ]),
@@ -198,7 +198,7 @@ fn test_expression() {
 
     assert_eq!(
         expression(&[
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::ParenOpen,
             Token::ParenClose
         ]),
@@ -210,9 +210,9 @@ fn test_expression() {
 
     assert_eq!(
         expression(&[
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::MinusEq,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
         ]),
         None
     );
@@ -251,7 +251,7 @@ fn test_statement() {
     assert_eq!(statement(&[]), None);
 
     assert_eq!(
-        statement(&[Token::Identififier("hoge".to_owned()), Token::Semi]),
+        statement(&[Token::Identifier("hoge".to_owned()), Token::Semi]),
         Some((
             &[] as &[Token],
             Statement::Expression(Expression::Lhs(Lhs::Pointer("hoge".to_owned())))
@@ -260,7 +260,7 @@ fn test_statement() {
     assert_eq!(
         statement(&[
             Token::Star,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::Semi
         ]),
         Some((
@@ -270,7 +270,7 @@ fn test_statement() {
     );
     assert_eq!(
         statement(&[
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi
@@ -287,7 +287,7 @@ fn test_statement() {
     assert_eq!(
         statement(&[
             Token::CurlyOpen,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi,
@@ -308,9 +308,9 @@ fn test_statement() {
         statement(&[
             Token::While,
             Token::Star,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::CurlyOpen,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi,
@@ -350,7 +350,7 @@ fn test_statements() {
 
     assert_eq!(
         statements(&[
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi
@@ -366,12 +366,12 @@ fn test_statements() {
 
     assert_eq!(
         statements(&[
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi,
             Token::Star,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi
@@ -392,16 +392,16 @@ fn test_statements() {
 
     assert_eq!(
         statements(&[
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi,
             Token::Star,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi,
@@ -441,7 +441,7 @@ fn test_block() {
     assert_eq!(
         block(&[
             Token::CurlyOpen,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi,
@@ -458,12 +458,12 @@ fn test_block() {
     assert_eq!(
         block(&[
             Token::CurlyOpen,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi,
             Token::Star,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi,
@@ -494,7 +494,7 @@ fn test_program() {
 
     assert_eq!(
         program(&[
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi,
@@ -509,12 +509,12 @@ fn test_program() {
 
     assert_eq!(
         program(&[
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi,
             Token::Star,
-            Token::Identififier("hoge".to_owned()),
+            Token::Identifier("hoge".to_owned()),
             Token::PlusEq,
             Token::Integer(123),
             Token::Semi,

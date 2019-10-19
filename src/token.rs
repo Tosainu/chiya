@@ -4,7 +4,7 @@ use regex::Regex;
 #[derive(Debug, PartialEq)]
 pub enum Token {
     Integer(i32),
-    Identififier(String),
+    Identifier(String),
 
     // Keywords
     While, // 'while'
@@ -81,7 +81,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, TokenizerError> {
             match_re!(ID_OR_KEY, |m: regex::Match| {
                 let t = match m.as_str() {
                     "while" => Token::While,
-                    s => Token::Identififier(s.to_string()),
+                    s => Token::Identifier(s.to_string()),
                 };
                 tokens.push(t);
             });
@@ -119,20 +119,20 @@ fn test_tokenize() {
     assert_eq!(tokenize("while"), Ok(vec![Token::While]));
     assert_eq!(
         tokenize("hoge"),
-        Ok(vec![Token::Identififier("hoge".to_owned())])
+        Ok(vec![Token::Identifier("hoge".to_owned())])
     );
     assert_eq!(
         tokenize("hoge_fuga"),
-        Ok(vec![Token::Identififier("hoge_fuga".to_owned())])
+        Ok(vec![Token::Identifier("hoge_fuga".to_owned())])
     );
     assert_eq!(
         tokenize("hoge123"),
-        Ok(vec![Token::Identififier("hoge123".to_owned())])
+        Ok(vec![Token::Identifier("hoge123".to_owned())])
     );
     assert!(tokenize("_").is_err());
     assert_eq!(
         tokenize("_hoge"),
-        Ok(vec![Token::Identififier("_hoge".to_owned())])
+        Ok(vec![Token::Identifier("_hoge".to_owned())])
     );
 
     assert!(tokenize("+").is_err());
@@ -155,7 +155,7 @@ fn test_tokenize() {
     assert_eq!(
         tokenize("foo();"),
         Ok(vec![
-            Token::Identififier("foo".to_owned()),
+            Token::Identifier("foo".to_owned()),
             Token::ParenOpen,
             Token::ParenClose,
             Token::Semi
@@ -167,9 +167,9 @@ fn test_tokenize() {
         Ok(vec![
             Token::While,
             Token::Star,
-            Token::Identififier("ptr".to_owned()),
+            Token::Identifier("ptr".to_owned()),
             Token::CurlyOpen,
-            Token::Identififier("ptr".to_owned()),
+            Token::Identifier("ptr".to_owned()),
             Token::MinusEq,
             Token::Integer(1),
             Token::Semi,
