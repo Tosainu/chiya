@@ -1,5 +1,7 @@
 # chiya
 
+![](https://github.com/Tosainu/chiya/workflows/CI/badge.svg)
+
 Toy programming language and compiler.
 
 ## Language design
