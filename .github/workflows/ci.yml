@@ -5,45 +5,17 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        rust:
-          - stable
-          - beta
-          - 1.38.0
-
+        os: [ubuntu-24.04, macos-15]
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5.0.0
+      - run: cargo --color always check
+      - run: cargo --color always test
 
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-${{ matrix.rust }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-${{ matrix.rust }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-${{ matrix.rust }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Install rustup
-        if: runner.os == 'macOS'
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
-          sh -s -- -y --default-toolchain none
-
-      - name: Setup Rust toolchains
-        env:
-          TOOLCHAIN: ${{ matrix.rust }}
-        run: |
-          rustup update $TOOLCHAIN
-          rustup default $TOOLCHAIN
-
-      - run: cargo test
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5.0.0
+      - run: cargo fmt -- --color always --check
+      - run: cargo --color always clippy
